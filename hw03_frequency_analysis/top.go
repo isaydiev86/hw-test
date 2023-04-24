@@ -29,6 +29,10 @@ func sortWords(count int, words map[string]int) []string {
 		return (words[temp[i]] > words[temp[j]]) ||
 			(words[temp[i]] == words[temp[j]] && temp[i] < temp[j])
 	})
-	temp = temp[0:count]
+	if wordsLen < count {
+		temp = temp[0:wordsLen]
+	} else {
+		temp = temp[0:count]
+	}
 	return temp
 }
