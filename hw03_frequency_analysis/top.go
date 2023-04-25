@@ -31,8 +31,6 @@ func sortWords(count int, words map[string]int) []string {
 	})
 	if wordsLen > count {
 		temp = temp[0:count]
-	} else {
-		temp = temp[0:wordsLen]
 	}
 	return temp
 }
