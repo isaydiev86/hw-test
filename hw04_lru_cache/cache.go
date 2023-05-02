@@ -21,7 +21,7 @@ type lruCache struct {
 
 func (l *lruCache) purge() {
 	if el := l.queue.Back(); el != nil {
-		delete(l.items, el.Value.(Item).key)
+		delete(l.items, el.Value.(*Item).key)
 		l.queue.Remove(el)
 		el = nil
 	}
