@@ -64,7 +64,6 @@ func TestCache(t *testing.T) {
 		c.Set("ggg", 7)
 		_, ok3 := c.Get("yyy")
 		require.False(t, ok3)
-
 	})
 
 	t.Run("clear", func(t *testing.T) {
