@@ -48,15 +48,13 @@ func Run(tasks []Task, n, m int) error {
 }
 
 func checkResult(ch chan Task, tasks []Task, errCount *int32, m int) bool {
-	hasError := false
 	for _, t := range tasks {
 		if atomic.LoadInt32(errCount) == int32(m) {
-			hasError = true
 			close(ch)
-			break
+			return true
 		}
-
 		ch <- t
 	}
-	return hasError
+	close(ch)
+	return false
 }
