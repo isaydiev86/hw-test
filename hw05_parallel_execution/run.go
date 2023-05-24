@@ -3,6 +3,7 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 )
 
 var (
@@ -18,49 +19,44 @@ func Run(tasks []Task, n, m int) error {
 		return ErrNoWorkers
 	}
 
-	guardCh := make(chan struct{}, n)
-	doneCh := make(chan bool, n)
-	var s, e int
-	var wg sync.WaitGroup
+	taskCh := make(chan Task)
+	var errsCount int32
+	wg := sync.WaitGroup{}
+	wg.Add(n)
 
-	for _, task := range tasks {
-		guardCh <- struct{}{}
-
-		wg.Add(1)
-		go func(Task) {
+	for i := 0; i < n; i++ {
+		go func() {
 			defer wg.Done()
-			defer func() {
-				<-guardCh
-			}()
-
-			err := task()
-			doneCh <- err == nil
-		}(task)
-
-		err := checkResults(doneCh, &n, &m, &s, &e)
-		if err != nil {
-			return err
-		}
+			for t := range taskCh {
+				err := t()
+				if err != nil {
+					atomic.AddInt32(&errsCount, 1)
+				}
+			}
+		}()
 	}
 
+	hasError := checkResult(taskCh, tasks, &errsCount, m)
+
 	wg.Wait()
-	close(guardCh)
-	close(doneCh)
+
+	if hasError {
+		return ErrErrorsLimitExceeded
+	}
 
 	return nil
 }
 
-func checkResults(doneCh <-chan bool, n *int, m *int, s *int, e *int) (err error) {
-	done := <-doneCh
-
-	if done {
-		*s++
-	} else {
-		*e++
-		if *e >= *m || (*e+*s > *n+*m) {
-			err = ErrErrorsLimitExceeded
+func checkResult(ch chan Task, tasks []Task, errCount *int32, m int) bool {
+	hasError := false
+	for _, t := range tasks {
+		if atomic.LoadInt32(errCount) == int32(m) {
+			hasError = true
+			close(ch)
+			break
 		}
-	}
 
-	return err
+		ch <- t
+	}
+	return hasError
 }
