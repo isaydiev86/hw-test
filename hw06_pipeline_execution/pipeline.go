@@ -12,6 +12,7 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	if in == nil {
 		return nil
 	}
+
 	for _, stage := range stages {
 		mCh := make(Bi)
 		go func(ch In) {
@@ -28,6 +29,7 @@ func ExecutePipeline(in In, done In, stages ...Stage) Out {
 				}
 			}
 		}(in)
+
 		in = stage(mCh)
 	}
 	return in
