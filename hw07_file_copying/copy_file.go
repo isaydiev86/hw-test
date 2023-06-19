@@ -11,23 +11,19 @@ func copyFile(src io.Reader, dt io.Writer, limit int64) error {
 	pBar := pb.Start64(limit)
 	defer pBar.Finish()
 
-	var total int64
-	for {
-		n, err := io.CopyN(dt, src, 1)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
+	var lr io.Reader
 
-			return err
+	if limit > 0 {
+		lr = io.LimitReader(src, limit)
+	} else {
+		lr = src
+	}
+	_, err := io.Copy(dt, lr)
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil
 		}
-
-		pBar.Increment()
-
-		total += n
-		if total == limit {
-			break
-		}
+		return err
 	}
 
 	return nil
