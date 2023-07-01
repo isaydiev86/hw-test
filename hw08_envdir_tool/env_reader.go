@@ -40,8 +40,7 @@ func ReadDir(dir string) (Environment, error) {
 			return nil, ErrorInvalidFilename
 		}
 
-		var val string
-		val, err = getValueFromFile(path.Join(dir, fInfo.Name()))
+		val, err := getValueFromFile(path.Join(dir, fInfo.Name()))
 		if err != nil {
 			return nil, err
 		}
