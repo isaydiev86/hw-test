@@ -2,14 +2,13 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"io/fs"
 	"log"
 	"os"
 	"path"
 	"strings"
-
-	"github.com/pkg/errors"
 )
 
 var ErrorInvalidFilename = errors.New("invalid filename")
@@ -27,7 +26,7 @@ type EnvValue struct {
 func ReadDir(dir string) (Environment, error) {
 	fileInfos, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, errors.WithMessage(err, "failed to read dir")
+		return nil, err
 	}
 
 	env := make(Environment, len(fileInfos))
@@ -65,7 +64,7 @@ func ReadDir(dir string) (Environment, error) {
 func getValueFromFile(fullName string) (string, error) {
 	f, err := os.Open(fullName)
 	if err != nil {
-		return "", errors.WithMessage(err, "failed to open file")
+		return "", err
 	}
 	defer func() {
 		err = f.Close()
@@ -77,7 +76,7 @@ func getValueFromFile(fullName string) (string, error) {
 	buf := bufio.NewReader(f)
 	line, err := buf.ReadBytes('\n')
 	if err != nil && !errors.Is(err, io.EOF) {
-		return "", errors.WithMessage(err, "failed to read file")
+		return "", err
 	}
 
 	val := strings.ReplaceAll(string(line), "\x00", "\n")
