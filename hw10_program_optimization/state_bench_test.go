@@ -6,13 +6,22 @@ import (
 )
 
 func BenchmarkGetDomainStat(b *testing.B) {
-	r, _ := zip.OpenReader("testdata/users.dat.zip")
+	r, err := zip.OpenReader("testdata/users.dat.zip")
+	if err != nil {
+		b.Fatalf("failed to open zip file: %v", err)
+	}
 	defer r.Close()
 
-	data, _ := r.File[0].Open()
+	data, err := r.File[0].Open()
+	if err != nil {
+		b.Fatalf("failed to open file inside zip: %v", err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		GetDomainStat(data, "biz")
+		_, err := GetDomainStat(data, "biz")
+		if err != nil {
+			b.Fatalf("failed to get domain stat: %v", err)
+		}
 	}
 }

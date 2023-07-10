@@ -50,38 +50,13 @@ func countDomains(r io.Reader, domain string) (DomainStat, error) {
 }
 
 func getUser(line []byte) (*User, error) {
-	user := new(User)
 	var err error
-
-	user.ID, err = jsonparser.GetInt(line, "Id")
-	if err != nil {
-		return nil, err
-	}
-
-	user.Username, err = jsonparser.GetString(line, "Username")
-	if err != nil {
-		return nil, err
-	}
+	var user User
 
 	user.Email, err = jsonparser.GetString(line, "Email")
 	if err != nil {
 		return nil, err
 	}
 
-	user.Phone, err = jsonparser.GetString(line, "Phone")
-	if err != nil {
-		return nil, err
-	}
-
-	user.Password, err = jsonparser.GetString(line, "Password")
-	if err != nil {
-		return nil, err
-	}
-
-	user.Address, err = jsonparser.GetString(line, "Address")
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return &user, nil
 }
