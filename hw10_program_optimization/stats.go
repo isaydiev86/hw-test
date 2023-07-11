@@ -30,8 +30,9 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 func countDomains(r io.Reader, domain string) (DomainStat, error) {
 	scanner := bufio.NewScanner(r)
 	res := make(DomainStat)
+	var u User
 	for scanner.Scan() {
-		user, err := getUser(scanner.Bytes())
+		user, err := getUser(&u, scanner.Bytes())
 		if err != nil {
 			return nil, err
 		}
@@ -49,14 +50,13 @@ func countDomains(r io.Reader, domain string) (DomainStat, error) {
 	return res, nil
 }
 
-func getUser(line []byte) (*User, error) {
+func getUser(u *User, line []byte) (*User, error) {
 	var err error
-	var user User
 
-	user.Email, err = jsonparser.GetString(line, "Email")
+	u.Email, err = jsonparser.GetString(line, "Email")
 	if err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return u, nil
 }
