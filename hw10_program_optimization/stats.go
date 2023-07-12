@@ -1,15 +1,18 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
-	"fmt"
+	"bufio"
+	"errors"
 	"io"
-	"regexp"
 	"strings"
+
+	"github.com/buger/jsonparser"
 )
 
+var ErrInvalidEmail = errors.New("email does not contain @")
+
 type User struct {
-	ID       int
+	ID       int64
 	Name     string
 	Username string
 	Email    string
@@ -21,46 +24,39 @@ type User struct {
 type DomainStat map[string]int
 
 func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
-	u, err := getUsers(r)
-	if err != nil {
-		return nil, fmt.Errorf("get users error: %w", err)
-	}
-	return countDomains(u, domain)
+	return countDomains(r, domain)
 }
 
-type users [100_000]User
-
-func getUsers(r io.Reader) (result users, err error) {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		return
-	}
-
-	lines := strings.Split(string(content), "\n")
-	for i, line := range lines {
-		var user User
-		if err = json.Unmarshal([]byte(line), &user); err != nil {
-			return
-		}
-		result[i] = user
-	}
-	return
-}
-
-func countDomains(u users, domain string) (DomainStat, error) {
-	result := make(DomainStat)
-
-	for _, user := range u {
-		matched, err := regexp.Match("\\."+domain, []byte(user.Email))
+func countDomains(r io.Reader, domain string) (DomainStat, error) {
+	scanner := bufio.NewScanner(r)
+	res := make(DomainStat)
+	var u User
+	for scanner.Scan() {
+		user, err := getUser(&u, scanner.Bytes())
 		if err != nil {
 			return nil, err
 		}
 
-		if matched {
-			num := result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])]
-			num++
-			result[strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])] = num
+		if !strings.Contains(user.Email, "@") {
+			return nil, ErrInvalidEmail
+		}
+
+		if strings.HasSuffix(user.Email, domain) {
+			tail := strings.ToLower(strings.SplitN(user.Email, "@", 2)[1])
+			res[tail]++
 		}
 	}
-	return result, nil
+
+	return res, nil
+}
+
+func getUser(u *User, line []byte) (*User, error) {
+	var err error
+
+	u.Email, err = jsonparser.GetString(line, "Email")
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
